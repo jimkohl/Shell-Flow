@@ -1,0 +1,5 @@
+// Shell script analysis
+digraph stuff {
+	     funca -> funcb -> funcc
+         funcb -> funcd
+}

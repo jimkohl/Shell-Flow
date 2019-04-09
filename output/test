@@ -1,0 +1,7 @@
+// Shell script analysis
+digraph {
+	doThis [label=doThis shape=ellipse type=FUNCT_DEF]
+	mylocal -> doz [constraint=false]
+	"doZ " [label="doZ " shape=ellipse type=FUNCT_DEF_1LINE]
+	mylocal -> dothis [constraint=false]
+}

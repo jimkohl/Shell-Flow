@@ -9,8 +9,8 @@ from graphviz import Digraph
 class BashParser:
 
 	shellbuiltInWords = "alias, bg, bind, break, builtin, caller, cd, command, compgen, complete, compopt, continue, declare, dirs, disown, echo, enable, eval, exec, exit, export, false, fc, fg, getopts, hash, help, history, jobs, kill, let, local, logout, mapfile, popd, printf, pushd, pwd, read, readarray, readonly, return, set, shift, shopt, source, suspend, test, times, trap, true, type, typeset, ulimit, umask, unalias, unset, wait"
-	usualCommands = "mkdir, rmdir, rm -rf, ls, ps, tree, find, grep, egrep, sed,awk, ifconfig, ping, rm, du, df, less, more, test"
-	complexWords = "for, if, else, elif, fi, do, done, while, {, }, ((,) ), [[, ]], case, esac, until, select"
+	usualCommands = "mkdir, rmdir, rm -rf, ls, ps, tree, find, grep, egrep, sed, awk, ifconfig, ping, rm, du, df, less, more, test"
+	complexWords = "for, if, else, elif, fi, do, done, while, {, }, ((, )), [[, ]], case, esac, until, select"
 
 	def __init__(self):
 		self.line = ""
@@ -21,22 +21,28 @@ class BashParser:
 		runCommand = cmdString.split(" ")[0].lower()
 		if ( ("||" not in cmdString) and ("|" in cmdString)):
 			cmd = PipelineCommand(cmdString)
-			return cmd	
+			return cmd
+
 		elif ( "()" in cmdString or "function " in cmdString): 
 			cmd = BashFunction(cmdString.replace("function","").replace("(","").replace(")","").strip())
 			return cmd
-		elif runCommand in self.complexWords:
-			cmd = CompoundCommand(cmdString)
-			return cmd
-		elif runCommand in self.usualCommands:
-			cmd = UsualCommand(cmdString)
-			return cmd
-		elif runCommand in self.shellbuiltInWords:
-			cmd = BuiltinCommand(cmdString)
-			return cmd
+
 		elif (("=" in cmdString) and ("==" not in cmdString)):
 			cmd = AssignmentCommand(cmdString)
 			return cmd
+
+		elif runCommand in self.complexWords:
+			cmd = CompoundCommand(cmdString)
+			return cmd
+
+		elif runCommand in self.usualCommands:
+			cmd = UsualCommand(cmdString)
+			return cmd
+
+		elif runCommand in self.shellbuiltInWords:
+			cmd = BuiltinCommand(cmdString)
+			return cmd
+
 		else:
 			cmd = BashCommand(runCommand)
 			return cmd
@@ -49,10 +55,10 @@ class BashCommand:
 		self.cmdType = "Other"
 
 	def printGraph(self, dot):
-		if ("FUNCTION" in self.cmdType):
-			return dot.node(self.cmdType,self.cmd.upper(),shape=self.shape)
+		if ("FUNCT" in self.cmdType):
+			return dot.node(self.cmd, self.cmd, shape = self.shape, type = self.cmdType)
 		else:
-			return None
+			return dot.edge('mylocal', self.cmd, constraint='false')
 			
 class BlockCommand:
 
@@ -62,25 +68,30 @@ class BlockCommand:
 		self.cmdType = "block"
 
 	def printGraph(self, dot):
-		#if ("FUNCTION" in self.cmdType):
-			return dot.node(self.cmdType,self.cmd,shape=self.shape)
-		#else:
-		#	return None	
+		if ("FUNCT" in self.cmdType):
+			return dot.node(self.cmd, self.cmd, shape = self.shape, type = self.cmdType)
+		else:
+			return None
 
 class AssignmentCommand(BashCommand):
 
-	#builtInWords=self.shellbuiltInWords.split(",")
+	#builtInWords = self.shellbuiltInWords.split(",")
 	def __init__(self, cmdString):
 		super(AssignmentCommand, self).__init__(cmdString.split("=")[0])
 		self.shape = "box"
 		self.cmdType = "SET"
+
+    # may want to turn this off as assignments are generally not that interesting
+	def printGraph(self, dot):
+		#return dot.node(self.cmdType, self.cmd, shape = self.shape)
+		return None
 
 	def isBuiltin():
 		return True;
 		
 class BuiltinCommand (BashCommand):
 
-	#builtInWords=self.shellbuiltInWords.split(",")
+	#builtInWords = self.shellbuiltInWords.split(",")
 	def __init__(self, cmdString):
 		super(BuiltinCommand, self).__init__(cmdString)
 		self.shape = "box"
@@ -91,12 +102,11 @@ class BuiltinCommand (BashCommand):
 
 class UsualCommand (BashCommand):
 
-	#builtInWords=self.usualCommands.split(",")
+	#builtInWords = self.usualCommands.split(",")
 	def __init__(self, cmdString):
 		super(UsualCommand, self).__init__(cmdString)
 		self.shape = "box"
 		self.cmdType = "USUAL"
-
 
 	def isBuiltin():
 		return False;
@@ -125,15 +135,23 @@ class CompoundCommand (BlockCommand):
 	def __init__(self, cmdString):
 		super(CompoundCommand, self).__init__(cmdString)
 		#self.cmdType="COMPOUND"
-		if ("if" in cmdString or "then" in cmdString or "fi" in cmdString or "else" in cmdString ):
+		if "if" in cmdString or "then" in cmdString or "fi" in cmdString or "else" in cmdString:
 			self.cmdType="IF"
-			self.cmd = cmdString.split(" ")[0].upper()
+			self.cmd = cmdString.split(" ")[0] #.upper()
 			self.shape = "diamond"
-		else:
+
+		elif "{" in cmdString and "}" in cmdString:
 			self.cmdType = "LOOP"
-			self.cmd = cmdString.split(" ")[0].upper()
+			self.cmd = cmdString.split(" ")[0] #.upper()
 			self.shape = "box3d"
 			#self.cmds=[cmdString.split(" ")[0]]
+
+		elif "{" not in cmdString and "}" in cmdString:
+			self = ''
+
+		else:
+			self.cmd = ''
+
 	def findCmdType(self):
 		''' 
 		 for command
@@ -148,13 +166,12 @@ class CompoundCommand (BlockCommand):
 class BashFunction (BlockCommand):
 	def __init__(self, cmdString):
 		super(BashFunction, self).__init__(cmdString)
-		self.cmd = cmdString
-		self.cmdType = "FUNCTION"
+		self.cmd = cmdString.replace(" {", "").replace(" }", "")
 		self.shape = "ellipse"
-		if "}" in cmdString :
-			self.cmdType="FUNCTION - END"
+		if "{" in cmdString and "}" in cmdString:
+			self.cmdType="FUNCT_DEF_1LINE"
 		else:
-			self.cmdType="FUNCTION - START"
+			self.cmdType="FUNCT_DEF"
 		self.commandsInBlock=[]
 
 		
@@ -178,8 +195,17 @@ def Grammar(bashCommand):
 	#print(x)
 	
 if __name__ == "__main__":
+	ctr = 0;
 	lines  = list(open(sys.argv[1]))
-	dot    = Digraph(comment = "Shell script analysis")
+	dot = Digraph(comment = "Shell script analysis")
+
+    # dot.node('A', 'King Arthur')
+    # dot.node('L', 'Sir Lancelot the Brave')
+	#
+    # dot.edges(['AB', 'AL'])
+	#
+    # dot.edge('B', 'L', constraint='false')
+
 	precmd = None
 	dq = collections.deque()
 	for line in lines:
@@ -193,14 +219,15 @@ if __name__ == "__main__":
 					prevcmd = dq.pop()
 					print(prevcmd.cmdType + " vs "+ currentCmd.cmdType)
 					print(currentCmd.cmdType)
-					if (prevcmd.cmdType != currentCmd.cmdType):
-					#or prevcmd.cmd!=currentCmd.cmd):
-						if (prevcmd.cmd != currentCmd.cmd):
-							dq.append(prevcmd)
+					# if prevcmd.cmdType != currentCmd.cmdType:
+					# 	if prevcmd.cmd != currentCmd.cmd:
+					dq.append(prevcmd)
 		
 			except IndexError:
 				print("ER")
 				pass
+
+			currentCmd.cmdType
 			dq.append(currentCmd)
 			
 	while True:
@@ -209,15 +236,16 @@ if __name__ == "__main__":
 		except IndexError:
 			break
 		
-				#if ((precmd is not None) and (dotNode is not None)):	
-					#if (isinstance(cmd,BashCommand)):
-						#dot.edge(precmd.cmd,cmd.cmd,"Next")
-						#precmd=cmd
-					#	print("[*] " + line.strip() + "=>" + cmd.cmd)
-				#else:
-				#	dot.edge(precmd.cmd,cmd.cmds[0],"Next")
-				#	precmd=cmd
-				#	print("[*] " + line.strip() + "=>" + cmds.cmds[0])
+		# if ((precmd is not None) and (dotNode is not None)):
+		# 	if (isinstance(cmd,BashCommand)):
+		# 		dot.edge(precmd.cmd.cmd,"Next")
+		# 		precmd=cmd
+		# 		print("[*] " + line.strip() + "=>" + cmd.cmd)
+		# else:
+		# 	dot.edge(precmd.cmd.cmds[0],"Next")
+		# 	precmd=cmd
+		# 	print("[*] " + line.strip() + "=>" + cmds.cmds[0])
+
 	dot.render("output/test", view=True)
 		
 		#if not line.trim().startswith(pattern) for pattern in builtInWords
