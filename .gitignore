@@ -1,0 +1,22 @@
+### macOS ###
+.DS_Store
+
+### IntelliJ IDEA ###
+*.iml
+*.ipr
+*.iws
+.idea
+generated/
+generated_tests/
+out/
+
+### Gradle ###
+!gradle/wrapper/gradle-wrapper.jar
+.gradle
+build/
+
+### Static Resources ###
+node_modules
+
+env/lib/python3.7
+output
