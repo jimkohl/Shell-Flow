@@ -1,3 +1,5 @@
+![](images/shell.jpeg)
+
 # ShellCollector
 
 ## Purpose
