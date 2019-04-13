@@ -14,4 +14,11 @@ which was a starting place but not fully implemented.
 
 ## Dependencies
 
-This tool utilizes the datavis package and pydatavis wrapper.
+* [Python](https://www.python.org/downloads/) (tested with 3.7.3)
+
+This tool utilizes the graphviz package and pygraphviz wrapper.  To install:
+* brew install graphviz
+* python3 -m venv tutorial-env 
+* source tutorial-env/bin/activate
+* pip3 install graphviz 
+
