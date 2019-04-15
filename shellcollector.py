@@ -289,6 +289,6 @@ if __name__ == "__main__":
 	for script in files:
 		create_subgraph(script)
 
-	parent.render("output/test", view=True)
+	parent.render("output/dotData", view=True)
 
 # if not line.trim().startswith(pattern) for pattern in builtInWords
