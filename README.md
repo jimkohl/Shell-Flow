@@ -21,4 +21,7 @@ This tool utilizes the graphviz package and pygraphviz wrapper.  To install:
 * python3 -m venv tutorial-env 
 * source tutorial-env/bin/activate
 * pip3 install graphviz 
+* pip3 install pytest
+* pytest
+
 
