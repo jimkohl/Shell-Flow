@@ -32,7 +32,7 @@ class BashParser:
 		if ("||" not in cmdstring) and ("|" in cmdstring):
 			return PipelineCommand(cmdstring)
 
-		elif "()" in cmdstring or "FUNC" in cmdstring:
+		elif "()" in cmdstring or "FUNCTION" in cmdstring or "function" in cmdstring:
 			return BashFunction(cmdstring.replace("function", "").replace("(", "").replace(")", "").strip())
 
 		elif ("=" in cmdstring) and ("==" not in cmdstring):
@@ -124,6 +124,8 @@ class UsualCommand (BashCommand):
 		return False
 
 
+# ls | grep 'pattern' | more
+
 class PipelineCommand (BashCommand):
 	def __init__(self, cmdstring):
 		super(PipelineCommand, self).__init__(cmdstring)
@@ -181,6 +183,9 @@ class CompoundCommand (BlockCommand):
 		(()) and [[]] expressions
 		"""
 
+#inFunction = false;
+
+# [ function ] name [ () ] { command-list; }
 
 class BashFunction (BlockCommand):
 	def __init__(self, cmdstring):
@@ -233,6 +238,11 @@ if __name__ == "__main__":
 					prevcmd = dq.pop()
 					# if prevcmd.cmdType != currentCmd.cmdType:
 					# 	if prevcmd.cmd != currentCmd.cmd:
+
+					# if (inCommand) {
+					#
+					# }
+
 					dq.append(prevcmd)
 				print(currentCmd.cmdType + "\t-> " + grammarLine)
 

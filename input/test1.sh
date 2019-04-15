@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 function pcf_app_exists {
     local app_name="$1"
     local output=`cf app ${app_name}`
