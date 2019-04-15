@@ -1,5 +1,7 @@
 #!/usr/bin/python
+
 import sys
+import os
 import re
 import collections
 from graphviz import Digraph
@@ -145,10 +147,10 @@ class ListCommand (BashCommand):
 
 		self.shape = "hexagon"
 
-		# if ( ("&&" in cmdstring) or ("&" in cmdstring)):
-		#  self.cmd="AND"
-		# elif ("||" in cmdstring):
-		#  self.cmd="OR"
+	# if ( ("&&" in cmdstring) or ("&" in cmdstring)):
+	#  self.cmd="AND"
+	# elif ("||" in cmdstring):
+	#  self.cmd="OR"
 
 
 class CompoundCommand (BlockCommand):
@@ -164,7 +166,7 @@ class CompoundCommand (BlockCommand):
 			self.cmdType = "LOOP"
 			self.cmd = cmdstring.split(" ")[0]   # .upper()
 			self.shape = "box3d"
-			# self.cmds=[cmdstring.split(" ")[0]]
+		# self.cmds=[cmdstring.split(" ")[0]]
 
 		elif "{" not in cmdstring and "}" in cmdstring:
 			self.cmd = ''
@@ -202,7 +204,7 @@ class BashFunction (BlockCommand):
 			self.cmdType = "FUNC"
 		self.commandsInBlock = []
 
-		
+
 def grammar(bashcommand):
 	single_quote_regex = r'(\\\'.*?\\\')'
 	# double_quote_regex = '(\\\".*?\\\")'
@@ -221,34 +223,30 @@ def grammar(bashcommand):
 	return parsedline
 
 # for x in builtInWords:
-	# print(x)
+# print(x)
 
 
-if __name__ == "__main__":
-	ctr = 0
-	lines = list(open(sys.argv[1]))
-	dot = Digraph(comment="Shell script analysis")
+
+def create_subgraph(script):
+	func_name = os.path.basename(script)
+	lines = list(open(script))
+
+	script_graph = Digraph(name="cluster" + script, node_attr={'shape': 'box'})    # cluster sets compound=true;
 
 	precmd = None
 	dq = collections.deque()
-
 	for line in lines:
-		bparser = BashParser()
+		parser = BashParser()
 		if (line.strip() is not None) and (line.strip().startswith("#") is False) and line.strip() != '':
 			grammarLine = grammar(line.strip())
-			currentCmd = bparser.parse(grammarLine)
+			currentCmd = parser.parse(grammarLine)
 			try:
 				if dq:
 					prevcmd = dq.pop()
 					# if prevcmd.cmdType != currentCmd.cmdType:
 					# 	if prevcmd.cmd != currentCmd.cmd:
-
-					# if (inCommand) {
-					#
-					# }
-
 					dq.append(prevcmd)
-				print(currentCmd.cmdType + "\t-> " + grammarLine)
+				print(currentCmd.cmdType + "\t→ " + grammarLine)
 
 			except IndexError:
 				print("ER")
@@ -256,24 +254,41 @@ if __name__ == "__main__":
 
 			dq.append(currentCmd)
 
+	# if ((precmd is not None) and (dotNode is not None)):
+	# 	if (isinstance(cmd,BashCommand)):
+	# 		dot.edge(precmd.cmd.cmd,"Next")
+	# 		precmd=cmd
+	# 		print("[*] " + line.strip() + "=>" + cmd.cmd)
+	# else:
+	# 	dot.edge(precmd.cmd.cmds[0],"Next")
+	# 	precmd=cmd
+	# 	print("[*] " + line.strip() + "=>" + cmds.cmds[0])
+
 	while True:
 		try:
-			dotNode = dq.popleft().printgraph(dot)
+			dotNode = dq.popleft().printgraph(script_graph)
+			parent.subgraph(script_graph)     # this has to be deferred
 		except IndexError:
 			break
 
-		# if ((precmd is not None) and (dotNode is not None)):
-		# 	if (isinstance(cmd,BashCommand)):
-		# 		dot.edge(precmd.cmd.cmd,"Next")
-		# 		precmd=cmd
-		# 		print("[*] " + line.strip() + "=>" + cmd.cmd)
-		# else:
-		# 	dot.edge(precmd.cmd.cmds[0],"Next")
-		# 	precmd=cmd
-		# 	print("[*] " + line.strip() + "=>" + cmds.cmds[0])
-
-	dot.render("output/test", view=True)
-
-	# if not line.trim().startswith(pattern) for pattern in builtInWords
+	return dotNode
 
 
+if __name__ == "__main__":
+	path = sys.argv[1]
+
+	files = []
+
+	if os.path.isdir(path):    # specialize to only process .sh files
+		files = [path + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+	else:
+		files.append(path)
+
+	parent = Digraph(comment="Shell script analysis")
+
+	for script in files:
+		create_subgraph(script)
+
+	parent.render("output/test", view=True)
+
+# if not line.trim().startswith(pattern) for pattern in builtInWords
