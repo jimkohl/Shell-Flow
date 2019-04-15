@@ -191,6 +191,10 @@ class BashFunction (BlockCommand):
 	def __init__(self, cmdstring):
 		super(BashFunction, self).__init__(cmdstring)
 		self.cmd = cmdstring.replace(" {", "").replace(" }", "")
+
+		global func_name
+		func_name = self.cmd
+
 		self.shape = "ellipse"
 		if "{" in cmdstring and "}" in cmdstring:
 			self.cmdType = "FUNC1"

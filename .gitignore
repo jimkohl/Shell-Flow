@@ -20,3 +20,6 @@ node_modules
 
 env/lib/python3.7
 output
+
+certs
+*.pem
