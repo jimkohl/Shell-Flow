@@ -25,3 +25,6 @@ This tool utilizes the graphviz package and pygraphviz wrapper.  To install:
 * pytest
 
 
+# Reference
+
+[Graphviz shapes](www.graphviz.org/doc/info/shapes.html)

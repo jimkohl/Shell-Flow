@@ -31,7 +31,7 @@ class BashParser:
 
 	def parse(self, cmdstring):
 		cmdstring = cmdstring.strip()
-		runcommand = cmdstring.split(" ")[0].lower()
+		runcommand = cmdstring.split(" ")[0]
 
 		if ("||" not in cmdstring) and ("|" in cmdstring):
 			return PipelineCommand(cmdstring)
@@ -57,16 +57,16 @@ class BashParser:
 
 class BashCommand:
 
-	def __init__(self, cmdstring):
-		self.cmd = cmdstring.split(" ")[0]
-		self.shape = "box"
-		self.cmdType = "CALL"
+    def __init__(self, cmdstring):
+        self.cmd = cmdstring.split(" ")[0]
+        self.shape = "egg"
+        self.cmdType = "CALL"
 
-	def printgraph(self, localdot):
-		if "FUNC" in self.cmdType:
-			return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
-		else:
-			return localdot.edge('mylocal', self.cmd, constraint='false')
+    def printgraph(self, localdot):
+        if "FUNC" in self.cmdType:
+            return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
+        else:
+            return localdot.edge('mylocal', self.cmd, constraint='false')
 
 
 class BlockCommand:
@@ -124,7 +124,7 @@ class UsualCommand (BashCommand):
 	# builtInWords = self.usualCommands.split(",")
 	def __init__(self, cmdstring):
 		super(UsualCommand, self).__init__(cmdstring)
-		self.shape = "box"
+		self.shape = "point"
 		self.cmdType = "USUAL"
 
 	@staticmethod
