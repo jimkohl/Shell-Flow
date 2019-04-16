@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import sys
 import os
 import re
@@ -229,6 +230,9 @@ def grammar(bashcommand):
 
 def create_subgraph(script):
 	func_name = os.path.basename(script)
+
+	print("file=" + script)
+
 	lines = list(open(script))
 
 	script_graph = Digraph(name="cluster" + script, node_attr={'shape': 'box'})    # cluster sets compound=true;
@@ -275,11 +279,17 @@ def create_subgraph(script):
 
 if __name__ == "__main__":
 	path = sys.argv[1]
+	displayfile = bool(len(sys.argv) > 2)    # TODO: hokey way to check for display option; head in this direction:
+
+	# parser = argparse.ArgumentParser(description='Eval shellscripts and gen graph')
+	# parser.add_argument("input", ..., required=True)
+	# parser.add_argument("display", ..., required=False)
+	# parser.parse_args()
 
 	files = []
 
 	if os.path.isdir(path):    # specialize to only process .sh files
-		files = [path + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+		files = [path + "/" + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 	else:
 		files.append(path)
 
@@ -288,6 +298,6 @@ if __name__ == "__main__":
 	for script in files:
 		create_subgraph(script)
 
-	parent.render("output/dotData", view=True)
+	parent.render("output/dotData", view=displayfile)
 
 # if not line.trim().startswith(pattern) for pattern in builtInWords
