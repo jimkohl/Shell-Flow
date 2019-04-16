@@ -266,12 +266,11 @@ def create_subgraph(script):
 
 	while True:
 		try:
-			dotNode = dq.popleft().printgraph(script_graph)
-			parent.subgraph(script_graph)     # this has to be deferred
+			dq.popleft().printgraph(script_graph)
 		except IndexError:
 			break
 
-	return dotNode
+	parent.subgraph(script_graph)     # this has to be deferred
 
 
 if __name__ == "__main__":
