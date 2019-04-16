@@ -15,7 +15,7 @@ funcNoFunction() {
 function funcWithParams {
   local arg1="$1"
   local arg2="$2"
-   echo "in funcWithParams a1=$arg1 a2=$arg2"
+  echo "in funcWithParams a1=$arg1 a2=$arg2"
 }
 
 funcNoParens

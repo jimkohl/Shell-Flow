@@ -9,6 +9,7 @@ from graphviz import Digraph
 
 # Parsing based on Bash grammar provided in link : http://wiki.bash-hackers.org/syntax/basicgrammar
 
+# Note: Ply (lex/yacc) seems like a better tool for this job, but for now using what was provided
 
 class BashParser:
 
@@ -35,9 +36,6 @@ class BashParser:
 		if ("||" not in cmdstring) and ("|" in cmdstring):
 			return PipelineCommand(cmdstring)
 
-		elif "()" in cmdstring or "FUNCTION" in cmdstring or "function" in cmdstring:
-			return BashFunction(cmdstring.replace("function", "").replace("(", "").replace(")", "").strip())
-
 		elif ("=" in cmdstring) and ("==" not in cmdstring):
 			return AssignmentCommand(cmdstring)
 
@@ -49,6 +47,9 @@ class BashParser:
 
 		elif runcommand in self.shellbuiltInWords:
 			return BuiltinCommand(cmdstring)
+
+		elif "()" in cmdstring or "FUNCTION" in cmdstring or "function" in cmdstring:
+			return BashFunction(cmdstring.replace("function", "").replace("(", "").replace(")", "").strip())
 
 		else:
 			return BashCommand(runcommand)
@@ -106,8 +107,12 @@ class BuiltinCommand (BashCommand):
 	# builtInWords = self.shellbuiltInWords.split(",")
 	def __init__(self, cmdstring):
 		super(BuiltinCommand, self).__init__(cmdstring)
-		self.shape = "box"
+		self.shape = "plaintext"
 		self.cmdType = "BUILTIN"
+
+	def printgraph(self, localdot):
+		#return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
+		return None
 
 	@staticmethod
 	def isbuiltin():
@@ -227,6 +232,7 @@ def grammar(bashcommand):
 # print(x)
 
 
+# create a bounded box for a script's functions and calls to built-ins / functions / system commands
 
 def create_subgraph(script):
 	func_name = os.path.basename(script)
@@ -276,6 +282,8 @@ def create_subgraph(script):
 
 	parent.subgraph(script_graph)     # this has to be deferred
 
+
+# scan script(s) for shell script elements
 
 if __name__ == "__main__":
 	path = sys.argv[1]
