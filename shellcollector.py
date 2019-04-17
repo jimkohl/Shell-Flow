@@ -56,16 +56,16 @@ class BashParser:
 
 
 class BashCommand:
-    def __init__(self, cmdstring):
-        self.cmd = cmdstring.split(" ")[0]
-        self.shape = "egg"
-        self.cmdType = "CALL"
+	def __init__(self, cmdstring):
+		self.cmd = cmdstring.split(" ")[0]
+		self.shape = "egg"
+		self.cmdType = "CALL"
 
-    def printgraph(self, localdot):
-        if "FUNC" in self.cmdType:
-            return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
-        else:
-            return localdot.edge(script_name, self.cmd, constraint='false')
+	def printgraph(self, localdot):
+		if "FUNC" in self.cmdType:
+			return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
+		else:
+			return localdot.edge(script_name, self.cmd, constraint='false')
 
 
 class ShellBlock:
@@ -73,7 +73,7 @@ class ShellBlock:
 	def __init__(self, cmdstring):
 		self.cmd = cmdstring.split(" ")[0]
 		self.cmds = []
-		self.shape = "triangle"
+		self.shape = "plaintext"
 		self.cmdType = "block"
 
 	def printgraph(self, localdot):
@@ -243,7 +243,7 @@ def grammar(bashcommand):
 
 
 # create a bounded box for a script's functions and calls to built-ins / functions / system commands
-def create_subgraph(script):
+def create_subgraph(parent, script):
 	global script_name
 	script_name = os.path.basename(script)
 
@@ -251,7 +251,8 @@ def create_subgraph(script):
 
 	lines = list(open(script))
 
-	script_graph = Digraph(name="cluster" + script, node_attr={'shape': 'box'})    # cluster sets compound=true;
+	graph_attr = {'label': script_name}
+	script_graph = Digraph(name="cluster" + script, graph_attr=graph_attr, node_attr={'shape': 'box'})    # cluster sets compound=true;
 
 	precmd = None
 
@@ -260,21 +261,21 @@ def create_subgraph(script):
 	for line in lines:
 		parser = BashParser()
 		if (line.strip() is not None) and (line.strip().startswith("#") is False) and line.strip() != '':
-			grammarLine = grammar(line.strip())
-			currentCmd = parser.parse(grammarLine)
+			grammarline = grammar(line.strip())
+			currentcmd = parser.parse(grammarline)
 			try:
 				if dq:
 					prevcmd = dq.pop()
-					# if prevcmd.cmdType != currentCmd.cmdType:
-					# 	if prevcmd.cmd != currentCmd.cmd:
+					# if prevcmd.cmdType != currentcmd.cmdType:
+					# 	if prevcmd.cmd != currentcmd.cmd:
 					dq.append(prevcmd)
-				print(currentCmd.cmdType + "\t→ " + grammarLine)
+				print(currentcmd.cmdType + "\t→ " + grammarline)
 
 			except IndexError:
 				print("ER")
 				pass
 
-			dq.append(currentCmd)
+			dq.append(currentcmd)
 
 	# if ((precmd is not None) and (dotNode is not None)):
 	# 	if (isinstance(cmd,BashCommand)):
@@ -292,7 +293,14 @@ def create_subgraph(script):
 		except IndexError:
 			break
 
-	parent.subgraph(script_graph)     # this has to be deferred
+	# with parent.subgraph(name='cluster_0') as c:
+	#     c.attr(style='filled')
+	#     c.attr(color='lightgrey')
+	#     c.node_attr.update(style='filled', color='white')
+	#     c.edges([('a0', 'a1'), ('a1', 'a2'), ('a2', 'a3')])
+	#     c.attr(label='process #1')
+
+	parent.subgraph(script_graph)   # this has to be deferred
 
 
 # scan script(s) for shell script elements
@@ -306,17 +314,20 @@ if __name__ == "__main__":
 	# parser.add_argument("display", ..., required=False)
 	# parser.parse_args()
 
-	files = []
+	scripts = []
 
 	if os.path.isdir(path):    # specialize to only process .sh files
-		files = [path + "/" + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+		for root, dirs, files in os.walk(path):
+			for file in files:
+				if file.endswith('.sh'):
+					scripts.append(root + "/" + file)
 	else:
-		files.append(path)
+		scripts.append(path)
 
 	parent = Digraph(comment="Shell script analysis")
 
-	for script in files:
-		create_subgraph(script)
+	for script in scripts:
+		create_subgraph(parent, script)
 
 	parent.render("output/dotData", view=displayfile)
 
