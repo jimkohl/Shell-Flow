@@ -73,7 +73,7 @@ class ShellBlock:
 	def __init__(self, cmdstring):
 		self.cmd = cmdstring.split(" ")[0]
 		self.cmds = []
-		self.shape = "plaintext"
+		self.shape = "point"
 		self.cmdType = "block"
 
 	def printgraph(self, localdot):
