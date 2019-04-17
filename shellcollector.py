@@ -56,7 +56,6 @@ class BashParser:
 
 
 class BashCommand:
-
     def __init__(self, cmdstring):
         self.cmd = cmdstring.split(" ")[0]
         self.shape = "egg"
@@ -66,7 +65,19 @@ class BashCommand:
         if "FUNC" in self.cmdType:
             return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
         else:
-            return localdot.edge('mylocal', self.cmd, constraint='false')
+            return localdot.edge(script_name, self.cmd, constraint='false')
+
+
+class ShellBlock:
+
+	def __init__(self, cmdstring):
+		self.cmd = cmdstring.split(" ")[0]
+		self.cmds = []
+		self.shape = "triangle"
+		self.cmdType = "block"
+
+	def printgraph(self, localdot):
+		return localdot.node(self.cmd, self.cmd, shape=self.shape, type=self.cmdType)
 
 
 class BlockCommand:
@@ -200,7 +211,6 @@ class BashFunction (BlockCommand):
 		super(BashFunction, self).__init__(cmdstring)
 		self.cmd = cmdstring.replace(" {", "").replace(" }", "")
 
-		global func_name
 		func_name = self.cmd
 
 		self.shape = "ellipse"
@@ -233,9 +243,9 @@ def grammar(bashcommand):
 
 
 # create a bounded box for a script's functions and calls to built-ins / functions / system commands
-
 def create_subgraph(script):
-	func_name = os.path.basename(script)
+	global script_name
+	script_name = os.path.basename(script)
 
 	print("file=" + script)
 
@@ -244,7 +254,9 @@ def create_subgraph(script):
 	script_graph = Digraph(name="cluster" + script, node_attr={'shape': 'box'})    # cluster sets compound=true;
 
 	precmd = None
+
 	dq = collections.deque()
+	dq.append(ShellBlock(script_name))
 	for line in lines:
 		parser = BashParser()
 		if (line.strip() is not None) and (line.strip().startswith("#") is False) and line.strip() != '':
